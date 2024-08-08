@@ -1,0 +1,2442 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/Gh_HarvestDailyKg_1.js"></script>
+        <script src="data/Gh_Growing_Status_2.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:2
+        }).fitBounds([[-6.439040538398376,107.42939885642728],[-6.425037395300657,107.44573183568347]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleEarthSatelite_0');
+        map.getPane('pane_GoogleEarthSatelite_0').style.zIndex = 400;
+        var layer_GoogleEarthSatelite_0 = L.tileLayer('https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleEarthSatelite_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 2,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 18
+        });
+        layer_GoogleEarthSatelite_0;
+        map.addLayer(layer_GoogleEarthSatelite_0);
+        function pop_Gh_HarvestDailyKg_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ogc_fid'] !== null ? autolinker.link(feature.properties['ogc_fid'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gh'] !== null ? autolinker.link(feature.properties['gh'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gh_harvest Daily_SUM of bruto_kg'] !== null ? autolinker.link(feature.properties['gh_harvest Daily_SUM of bruto_kg'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Gh_HarvestDailyKg_1_0(feature) {
+            switch(String(feature.properties['gh_harvest Daily_SUM of bruto_kg'])) {
+                case '0.6':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '1.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '1.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '1.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '10.6':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '103.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '108.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '110.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '114':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '116.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '117.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '129.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '13.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '130.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '132.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '135.35':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '14.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '14.95':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '142.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '144.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '145.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '155.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '156.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '157.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '157.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '159.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '16.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '162.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '17.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '17.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '172.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '18.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '18.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '18.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '180.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '181.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '19.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '2.55':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '2.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '2.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '2.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '21.7':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '22.35':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '22.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '22.5':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '22.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '22.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '23':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '23.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '23.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '23.5':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '23.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '25.6':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '26.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '26.35':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '27.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '28.55':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '29.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '3.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '3.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '3.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '3.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '30.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '30.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '30.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '31.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '33':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '33.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '36.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '36.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '38.5':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '39.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '4.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '4.55':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '4.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '40.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '41.95':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '42.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '42.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '42.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '42.95':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '43.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '45.5':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '45.7':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '45.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '46.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '48.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '48.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '5.2':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '5.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '5.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '5.95':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '52.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '55.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '59.7':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '6.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '6.95':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '60.1':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '61.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '62.75':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '63.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '65.7':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '67.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '67.3':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '68':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '68.7':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '7.3':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '70.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '72.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '74.55':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '74.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '78.6':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '8.3':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '8.4':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '8.6':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '8.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '80.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '83.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '83.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '83.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '85.35':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '85.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '86.05':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '86.25':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '88.65':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '88.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '89.15':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '89.35':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '9.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '9.85':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '92.45':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '92.8':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '93':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                case '94.9':
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_Gh_HarvestDailyKg_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,12,12,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_Gh_HarvestDailyKg_1');
+        map.getPane('pane_Gh_HarvestDailyKg_1').style.zIndex = 401;
+        map.getPane('pane_Gh_HarvestDailyKg_1').style['mix-blend-mode'] = 'normal';
+        var layer_Gh_HarvestDailyKg_1 = new L.geoJson(json_Gh_HarvestDailyKg_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Gh_HarvestDailyKg_1',
+            layerName: 'layer_Gh_HarvestDailyKg_1',
+            pane: 'pane_Gh_HarvestDailyKg_1',
+            onEachFeature: pop_Gh_HarvestDailyKg_1,
+            style: style_Gh_HarvestDailyKg_1_0,
+        });
+        bounds_group.addLayer(layer_Gh_HarvestDailyKg_1);
+        map.addLayer(layer_Gh_HarvestDailyKg_1);
+        function pop_Gh_Growing_Status_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ogc_fid'] !== null ? autolinker.link(feature.properties['ogc_fid'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gh'] !== null ? autolinker.link(feature.properties['gh'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gh_growing_status_Status'] !== null ? autolinker.link(feature.properties['gh_growing_status_Status'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Gh_Growing_Status_2_0(feature) {
+            switch(String(feature.properties['gh_growing_status_Status'])) {
+                case 'Awaiting for Extermination':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,149,153,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Belum Tanam':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,255,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Extermination':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,0,4,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Generative':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(247,224,0,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Panen':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(119,255,112,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Panen Raya':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(15,197,30,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Panen Turun':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,114,13,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Vegetative':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,253,144,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'NULL':
+                    return {
+                pane: 'pane_Gh_Growing_Status_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(105,90,222,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_Gh_Growing_Status_2');
+        map.getPane('pane_Gh_Growing_Status_2').style.zIndex = 402;
+        map.getPane('pane_Gh_Growing_Status_2').style['mix-blend-mode'] = 'normal';
+        var layer_Gh_Growing_Status_2 = new L.geoJson(json_Gh_Growing_Status_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Gh_Growing_Status_2',
+            layerName: 'layer_Gh_Growing_Status_2',
+            pane: 'pane_Gh_Growing_Status_2',
+            onEachFeature: pop_Gh_Growing_Status_2,
+            style: style_Gh_Growing_Status_2_0,
+        });
+        bounds_group.addLayer(layer_Gh_Growing_Status_2);
+        map.addLayer(layer_Gh_Growing_Status_2);
+        var baseMaps = {};
+        var overlaysTree = [
+            {label: 'Gh_Growing_Status<br /><table><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_AwaitingforExtermination0.png" /></td><td>Awaiting for Extermination</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_BelumTanam1.png" /></td><td>Belum Tanam</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_Extermination2.png" /></td><td>Extermination</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_Generative3.png" /></td><td>Generative</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_Panen4.png" /></td><td>Panen</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_PanenRaya5.png" /></td><td>Panen Raya</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_PanenTurun6.png" /></td><td>Panen Turun</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_Vegetative7.png" /></td><td>Vegetative</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_Growing_Status_2_8.png" /></td><td></td></tr></table>', layer: layer_Gh_Growing_Status_2},
+            {label: 'Gh_Harvest Daily (Kg)<br /><table><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_060.png" /></td><td>0.6</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_121.png" /></td><td>1.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_142.png" /></td><td>1.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1453.png" /></td><td>1.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1064.png" /></td><td>10.6</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_10315.png" /></td><td>103.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_108156.png" /></td><td>108.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_11027.png" /></td><td>110.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1148.png" /></td><td>114</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_116759.png" /></td><td>116.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1170510.png" /></td><td>117.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1296511.png" /></td><td>129.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_13112.png" /></td><td>13.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_130213.png" /></td><td>130.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1326514.png" /></td><td>132.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1353515.png" /></td><td>135.35</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_14216.png" /></td><td>14.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_149517.png" /></td><td>14.95</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1421518.png" /></td><td>142.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1446519.png" /></td><td>144.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1452520.png" /></td><td>145.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_155921.png" /></td><td>155.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_156422.png" /></td><td>156.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1571523.png" /></td><td>157.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_157924.png" /></td><td>157.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1591525.png" /></td><td>159.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_16826.png" /></td><td>16.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_162827.png" /></td><td>162.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_171528.png" /></td><td>17.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_174529.png" /></td><td>17.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1727530.png" /></td><td>172.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_180531.png" /></td><td>18.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_18232.png" /></td><td>18.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_187533.png" /></td><td>18.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_180934.png" /></td><td>180.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_1812535.png" /></td><td>181.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_19136.png" /></td><td>19.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_25537.png" /></td><td>2.55</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_26538.png" /></td><td>2.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_2839.png" /></td><td>2.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_28540.png" /></td><td>2.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_21741.png" /></td><td>21.7</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_223542.png" /></td><td>22.35</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_224543.png" /></td><td>22.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_22544.png" /></td><td>22.5</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_22845.png" /></td><td>22.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_228546.png" /></td><td>22.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_2347.png" /></td><td>23</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_23248.png" /></td><td>23.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_232549.png" /></td><td>23.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_23550.png" /></td><td>23.5</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_237551.png" /></td><td>23.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_25652.png" /></td><td>25.6</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_26153.png" /></td><td>26.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_263554.png" /></td><td>26.35</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_271555.png" /></td><td>27.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_285556.png" /></td><td>28.55</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_291557.png" /></td><td>29.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_30558.png" /></td><td>3.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_32559.png" /></td><td>3.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_34560.png" /></td><td>3.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_38561.png" /></td><td>3.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_300562.png" /></td><td>30.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_30463.png" /></td><td>30.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_304564.png" /></td><td>30.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_31165.png" /></td><td>31.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_3366.png" /></td><td>33</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_332567.png" /></td><td>33.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_366568.png" /></td><td>36.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_36969.png" /></td><td>36.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_38570.png" /></td><td>38.5</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_394571.png" /></td><td>39.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_4172.png" /></td><td>4.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_45573.png" /></td><td>4.55</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_46574.png" /></td><td>4.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_40875.png" /></td><td>40.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_419576.png" /></td><td>41.95</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_422577.png" /></td><td>42.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_424578.png" /></td><td>42.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_42979.png" /></td><td>42.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_429580.png" /></td><td>42.95</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_438581.png" /></td><td>43.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_45582.png" /></td><td>45.5</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_45783.png" /></td><td>45.7</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_457584.png" /></td><td>45.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_468585.png" /></td><td>46.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_48186.png" /></td><td>48.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_484587.png" /></td><td>48.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_5288.png" /></td><td>5.2</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_54589.png" /></td><td>5.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_56590.png" /></td><td>5.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_59591.png" /></td><td>5.95</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_520592.png" /></td><td>52.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_554593.png" /></td><td>55.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_59794.png" /></td><td>59.7</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_60595.png" /></td><td>6.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_69596.png" /></td><td>6.95</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_60197.png" /></td><td>60.1</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_611598.png" /></td><td>61.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_627599.png" /></td><td>62.75</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_6385100.png" /></td><td>63.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_657101.png" /></td><td>65.7</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_6725102.png" /></td><td>67.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_673103.png" /></td><td>67.3</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_68104.png" /></td><td>68</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_687105.png" /></td><td>68.7</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_73106.png" /></td><td>7.3</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_704107.png" /></td><td>70.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_724108.png" /></td><td>72.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_7455109.png" /></td><td>74.55</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_748110.png" /></td><td>74.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_786111.png" /></td><td>78.6</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_83112.png" /></td><td>8.3</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_84113.png" /></td><td>8.4</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_86114.png" /></td><td>8.6</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_865115.png" /></td><td>8.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_808116.png" /></td><td>80.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8325117.png" /></td><td>83.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8385118.png" /></td><td>83.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_839119.png" /></td><td>83.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8535120.png" /></td><td>85.35</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_859121.png" /></td><td>85.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8605122.png" /></td><td>86.05</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8625123.png" /></td><td>86.25</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8865124.png" /></td><td>88.65</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_888125.png" /></td><td>88.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8915126.png" /></td><td>89.15</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_8935127.png" /></td><td>89.35</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_945128.png" /></td><td>9.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_985129.png" /></td><td>9.85</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_9245130.png" /></td><td>92.45</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_928131.png" /></td><td>92.8</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_93132.png" /></td><td>93</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_949133.png" /></td><td>94.9</td></tr><tr><td style="text-align: center;"><img src="legend/Gh_HarvestDailyKg_1_134.png" /></td><td></td></tr></table>', layer: layer_Gh_HarvestDailyKg_1},
+            {label: " Google Earth Satelite", layer: layer_GoogleEarthSatelite_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        var i = 0;
+        layer_Gh_HarvestDailyKg_1.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['gh_harvest Daily_SUM of bruto_kg'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['gh_harvest Daily_SUM of bruto_kg']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Gh_HarvestDailyKg_1'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_Gh_Growing_Status_2.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['gh'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['gh']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Gh_Growing_Status_2'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        resetLabels([layer_Gh_HarvestDailyKg_1,layer_Gh_Growing_Status_2]);
+        map.on("zoomend", function(){
+            resetLabels([layer_Gh_HarvestDailyKg_1,layer_Gh_Growing_Status_2]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_Gh_HarvestDailyKg_1,layer_Gh_Growing_Status_2]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_Gh_HarvestDailyKg_1,layer_Gh_Growing_Status_2]);
+        });
+        </script>
+    </body>
+</html>
